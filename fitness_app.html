@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Fitness">
+<title>Fitness Tracker</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;background:#0d0d1a;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',sans-serif;color:#f0f0f0;overflow:hidden}
+.app{display:flex;flex-direction:column;height:100vh;max-width:430px;margin:0 auto;background:#0d0d1a}
+.header{background:#111827;padding:env(safe-area-inset-top,12px) 16px 10px;border-bottom:1px solid #1f2937}
+.header h1{font-size:18px;font-weight:600;text-align:center;color:#f9fafb}
+.header .date{font-size:12px;color:#6b7280;text-align:center;margin-top:2px}
+.content{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:12px 12px 80px}
+.nav{display:flex;background:#111827;border-top:1px solid #1f2937;padding:8px 0 calc(8px + env(safe-area-inset-bottom,0px));position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;z-index:100}
+.nav-btn{flex:1;background:none;border:none;color:#6b7280;font-size:10px;padding:2px 4px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px}
+.nav-btn.active{color:#60a5fa}
+.nav-icon{font-size:22px;line-height:1}
+.section{display:none}
+.section.active{display:block}
+.card{background:#1f2937;border-radius:14px;padding:14px;margin-bottom:12px;border:1px solid #374151}
+.card-title{font-size:11px;font-weight:600;color:#9ca3af;text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px}
+.big-stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.big-stat{background:#1f2937;border-radius:14px;padding:14px;border:1px solid #374151;text-align:center}
+.big-stat .val{font-size:26px;font-weight:700;color:#f9fafb}
+.big-stat .lbl{font-size:11px;color:#9ca3af;margin-top:2px}
+.big-stat .sub{font-size:11px;margin-top:3px;font-weight:500}
+.stat-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid #374151}
+.stat-row:last-child{border-bottom:none}
+.stat-label{font-size:14px;color:#9ca3af}
+.stat-val{font-size:14px;font-weight:500;color:#f9fafb}
+.pbar{background:#374151;border-radius:6px;height:7px;margin-top:5px;overflow:hidden}
+.pfill{height:7px;border-radius:6px;transition:width .4s ease}
+.check-row{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid #374151}
+.check-row:last-child{border-bottom:none}
+.check-label{font-size:15px;color:#f9fafb}
+.cbtn{width:30px;height:30px;border-radius:50%;border:2px solid #374151;background:none;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;transition:all .2s;color:transparent}
+.cbtn.done{background:#22c55e;border-color:#22c55e;color:#fff}
+.water-grid{display:flex;flex-wrap:wrap;gap:7px;margin:8px 0 4px}
+.wdrop{width:38px;height:38px;border-radius:50%;border:2px solid #60a5fa;background:none;cursor:pointer;font-size:19px;display:flex;align-items:center;justify-content:center;transition:all .15s;opacity:.35}
+.wdrop.on{background:#1d4ed8;border-color:#60a5fa;opacity:1}
+.wlabel{font-size:13px;color:#9ca3af;text-align:center;margin-top:4px}
+.wschedule{margin-top:10px;display:grid;gap:4px}
+.wrow{display:flex;justify-content:space-between;font-size:13px;padding:3px 0}
+.wrow span:first-child{color:#9ca3af}
+.wrow span:last-child{font-weight:500;color:#f9fafb}
+input,select{width:100%;background:#111827;border:1px solid #374151;border-radius:10px;padding:10px 12px;font-size:15px;color:#f9fafb;font-family:inherit;outline:none;margin-bottom:0}
+input:focus,select:focus{border-color:#60a5fa}
+select option{background:#111827}
+.irow{margin-bottom:10px}
+.irow label{font-size:12px;color:#9ca3af;display:block;margin-bottom:5px;font-weight:500}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.btn{width:100%;background:#1d4ed8;color:#fff;border:none;border-radius:12px;padding:13px;font-size:15px;font-weight:600;cursor:pointer;margin-top:8px}
+.btn:active{opacity:.8;transform:scale(.98)}
+.btn.green{background:#16a34a}
+.btn.gray{background:#374151}
+.food-chip{display:flex;justify-content:space-between;align-items:center;background:#111827;border:1px solid #374151;border-radius:10px;padding:8px 12px;margin-bottom:6px}
+.chip-name{font-size:14px;font-weight:500;color:#f9fafb}
+.chip-cal{font-size:12px;color:#9ca3af;margin-top:1px}
+.rm-btn{background:none;border:none;color:#ef4444;font-size:18px;cursor:pointer;padding:0 2px;line-height:1}
+.food-total{display:flex;justify-content:space-between;padding:10px 0 0;border-top:1px solid #374151;margin-top:4px}
+.food-total span:first-child{font-size:14px;font-weight:600;color:#f9fafb}
+.food-total span:last-child{font-size:14px;font-weight:600;color:#60a5fa}
+.wo-entry{background:#111827;border-radius:10px;border:1px solid #374151;padding:10px 12px;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center}
+.wo-name{font-size:14px;font-weight:500;color:#f9fafb}
+.wo-detail{font-size:12px;color:#9ca3af;margin-top:2px}
+.wo-target{font-size:12px;color:#60a5fa;font-weight:500}
+.phase-badge{display:inline-block;background:#1d4ed8;color:#bfdbfe;font-size:12px;padding:4px 14px;border-radius:20px;margin-bottom:12px;font-weight:500}
+.tl-item{display:flex;gap:12px;margin-bottom:12px;align-items:flex-start}
+.tl-dot{width:12px;height:12px;border-radius:50%;background:#374151;margin-top:4px;flex-shrink:0;border:2px solid #374151}
+.tl-dot.current{background:#22c55e;border-color:#22c55e}
+.tl-dot.done{background:#60a5fa;border-color:#60a5fa}
+.tl-text{font-size:13px;color:#9ca3af;line-height:1.5}
+.tl-text strong{color:#f9fafb;font-weight:600}
+.weight-item{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #374151}
+.weight-item:last-child{border-bottom:none}
+.w-date{font-size:13px;color:#9ca3af}
+.w-val{font-size:15px;font-weight:600;color:#f9fafb}
+.pill{font-size:11px;padding:3px 10px;border-radius:20px;font-weight:600}
+.pill.down{background:#14532d;color:#4ade80}
+.pill.up{background:#450a0a;color:#f87171}
+.pill.start{background:#1f2937;color:#9ca3af}
+.habit-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:6px}
+.hday{font-size:10px;color:#6b7280;text-align:center;padding:2px 0}
+.hcell{height:30px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600}
+.hcell.full{background:#14532d;color:#4ade80}
+.hcell.miss{background:#1f2937;color:#6b7280}
+.hcell.today{outline:2px solid #60a5fa;outline-offset:1px}
+.hlabel{font-size:11px;color:#9ca3af;margin:6px 0 3px;font-weight:500}
+.history-item{background:#111827;border-radius:10px;border:1px solid #374151;padding:10px 12px;margin-bottom:6px}
+.hi-date{font-size:12px;color:#9ca3af}
+.hi-foods{margin-top:4px}
+.hi-food{font-size:13px;color:#d1d5db;padding:1px 0}
+.hi-total{font-size:12px;color:#60a5fa;font-weight:600;margin-top:4px}
+.meal-section{background:#111827;border-radius:10px;border:1px solid #374151;padding:12px;margin-bottom:8px}
+.meal-title{font-size:13px;font-weight:600;color:#60a5fa;margin-bottom:8px}
+.meal-step{display:grid;grid-template-columns:auto 1fr auto;gap:8px;padding:5px 0;border-bottom:1px solid #1f2937;font-size:13px}
+.meal-step:last-child{border-bottom:none}
+.step-key{color:#9ca3af;font-weight:500;white-space:nowrap}
+.step-val{color:#f9fafb}
+.step-note{color:#6b7280;font-size:11px;text-align:right}
+.grocery-cat{margin-bottom:10px}
+.gcat-title{font-size:12px;font-weight:600;color:#9ca3af;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;display:flex;align-items:center;gap:6px}
+.gitem{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid #374151}
+.gitem:last-child{border-bottom:none}
+.gitem-name{font-size:14px;color:#f9fafb}
+.gitem-qty{font-size:13px;color:#9ca3af}
+.gitem-chk{width:24px;height:24px;border-radius:6px;border:2px solid #374151;background:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;color:transparent;transition:all .15s;flex-shrink:0}
+.gitem-chk.got{background:#16a34a;border-color:#16a34a;color:#fff}
+.empty-state{text-align:center;padding:24px;color:#6b7280;font-size:14px}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <h1>🏋️ Fitness Tracker</h1>
+    <div class="date" id="hdrDate"></div>
+  </div>
+
+  <div class="content" id="content">
+
+    <div class="section active" id="sec-today">
+      <div class="big-stats">
+        <div class="big-stat">
+          <div class="val" id="todayCalVal">0</div>
+          <div class="lbl">Calories</div>
+          <div class="sub" id="calGoalSub" style="color:#f59e0b">Goal: 1,800</div>
+        </div>
+        <div class="big-stat">
+          <div class="val" id="todayProtVal">0g</div>
+          <div class="lbl">Protein</div>
+          <div class="sub" id="protGoalSub" style="color:#22c55e">Goal: 100g+</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Calorie progress</div>
+        <div style="display:flex;justify-content:space-between;font-size:12px;color:#9ca3af;margin-bottom:5px">
+          <span id="calPctLbl">0%</span><span id="calRemLbl">1,800 remaining</span>
+        </div>
+        <div class="pbar"><div class="pfill" id="calBar" style="width:0%;background:#60a5fa"></div></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Daily checklist</div>
+        <div id="checklistEl"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">💧 Water (11am–8pm shift)</div>
+        <div class="water-grid" id="waterDrops"></div>
+        <div class="wlabel" id="waterLbl">0 / 100 oz</div>
+        <div class="wschedule">
+          <div class="wrow"><span>By 2pm →</span><span>32 oz</span></div>
+          <div class="wrow"><span>By 5pm →</span><span>64 oz</span></div>
+          <div class="wrow"><span>By 8pm →</span><span>96 oz</span></div>
+          <div class="wrow"><span>At home →</span><span>100 oz+</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section" id="sec-nutrition">
+      <div class="card">
+        <div class="card-title">Log food</div>
+        <div class="irow">
+          <label>Quick add</label>
+          <select id="quickFood">
+            <option value="">Select preset...</option>
+            <option value="Smoothie|400|46">Smoothie (400 cal, 46g)</option>
+            <option value="Chicken/Rice/Veggies|520|59">Chicken/Rice/Veggies (520 cal, 59g)</option>
+            <option value="Kirkland Beef Stick|100|10">Kirkland Beef Stick (100 cal, 10g)</option>
+            <option value="HelloFresh|950|40">HelloFresh (~950 cal, ~40g)</option>
+            <option value="Chick-fil-A|815|62">Chick-fil-A (815 cal, 62g)</option>
+            <option value="Qdoba|500|46">Qdoba (500 cal, 46g)</option>
+            <option value="Cheese Sticks|160|10">Cheese Sticks (160 cal, 10g)</option>
+            <option value="Cracker Barrel|755|71">Cracker Barrel (755 cal, 71g)</option>
+          </select>
+        </div>
+        <div class="irow"><label>Food name</label><input type="text" id="cFoodName" placeholder="e.g. Breakfast"></div>
+        <div class="grid2">
+          <div class="irow"><label>Calories</label><input type="number" id="cFoodCal" placeholder="0"></div>
+          <div class="irow"><label>Protein (g)</label><input type="number" id="cFoodProt" placeholder="0"></div>
+        </div>
+        <button class="btn" onclick="addFood()">+ Add food</button>
+      </div>
+      <div class="card">
+        <div class="card-title">Today's log</div>
+        <div id="todayFoodLog"></div>
+        <div class="food-total" id="foodTotalRow" style="display:none">
+          <span>Total</span>
+          <span id="foodTotalLabel">0 cal · 0g</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="section" id="sec-workout">
+      <div class="card">
+        <div class="card-title">Log a set</div>
+        <div class="irow">
+          <label>Machine</label>
+          <select id="machSel">
+            <option>Seated Chest Press</option>
+            <option>Shoulder Press</option>
+            <option>Dip Assist</option>
+            <option>Seated Row</option>
+            <option>Lat Pulldown</option>
+            <option>Bicep Curl</option>
+            <option>Tricep Pressdown</option>
+            <option>Tricep Press</option>
+            <option>Seated Leg Press</option>
+            <option>Seated Leg Curl</option>
+            <option>Adductor</option>
+            <option>Abductor</option>
+            <option>Abdominal</option>
+          </select>
+        </div>
+        <div class="grid2">
+          <div class="irow"><label>Weight (lbs)</label><input type="number" id="setWt" placeholder="40"></div>
+          <div class="irow"><label>Reps</label><input type="number" id="setRps" placeholder="24"></div>
+        </div>
+        <button class="btn green" onclick="logSet()">Log set</button>
+      </div>
+      <div class="card" id="loggedCard" style="display:none">
+        <div class="card-title">Logged today</div>
+        <div id="loggedSetsEl"></div>
+      </div>
+    </div>
+
+    <div class="section" id="sec-progress">
+      <div class="card">
+        <div class="card-title">Log weight</div>
+        <div class="grid2">
+          <div class="irow"><label>Weight (lbs)</label><input type="number" id="wtInput" placeholder="172.0" step="0.1"></div>
+          <div class="irow"><label>Notes</label><input type="text" id="wtNote" placeholder="optional"></div>
+        </div>
+        <button class="btn" onclick="logWeight()">Save weigh-in</button>
+      </div>
+      <div class="card">
+        <div class="card-title">Weigh-in history</div>
+        <div id="wtHistory"></div>
+      </div>
+    </div>
+
+    <div class="section" id="sec-meal">
+        <div class="card">
+            <div class="card-title">🛒 Grocery list</div>
+            <div id="groceryEl"></div>
+        </div>
+    </div>
+  </div>
+
+  <div class="nav">
+    <button class="nav-btn active" id="nav-today" onclick="showTab('today')"><span class="nav-icon">📊</span>Today</button>
+    <button class="nav-btn" id="nav-nutrition" onclick="showTab('nutrition')"><span class="nav-icon">🥗</span>Nutrition</button>
+    <button class="nav-btn" id="nav-workout" onclick="showTab('workout')"><span class="nav-icon">💪</span>Workout</button>
+    <button class="nav-btn" id="nav-progress" onclick="showTab('progress')"><span class="nav-icon">📈</span>Progress</button>
+    <button class="nav-btn" id="nav-meal" onclick="showTab('meal')"><span class="nav-icon">🍽</span>Meal</button>
+  </div>
+</div>
+
+<script>
+// ── SYNC CONFIG ──────────────────────────────────────────────────────
+const SYNC_URL = 'https://script.google.com/macros/s/AKfycbybK8oD5lbsKZN_1K88tedUufTM75ePIrZS3_z1OfM5cUNo9UfYAeQ6bjyu6ad6LRxalw/exec';
+
+async function syncToSheets(type, data) {
+  try {
+    const response = await fetch(SYNC_URL, {
+      method: 'POST',
+      mode: 'no-cors', // Avoids CORS errors on some setups
+      body: JSON.stringify({ type: type, data: data })
+    });
+  } catch (error) {
+    console.error('Sync Error:', error);
+  }
+}
+
+// ── STORAGE & LOGIC ──────────────────────────────────────────────────
+function load(k,def){try{const v=localStorage.getItem(k);return v?JSON.parse(v):def;}catch(e){return def;}}
+function save(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
+
+let foodLog=load('foodLog', []);
+let checks=load('dailyChecks', []);
+let weights=load('weights', []);
+let workouts=load('workouts', []);
+let groceryGot=load('groceryGot', {});
+let waterDrops=load('waterDrops', null);
+
+const TODAY = new Date().toISOString().split('T')[0];
+
+function showTab(t){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('sec-'+t).classList.add('active');
+  document.getElementById('nav-'+t).classList.add('active');
+}
+
+// ── LOGGING FUNCTIONS ────────────────────────────────────────────────
+function addFood(){
+  const qs=document.getElementById('quickFood').value;
+  let name,cal,prot;
+  if(qs){
+    [name,cal,prot]=qs.split('|');
+    cal=parseInt(cal);prot=parseFloat(prot);
+  } else {
+    name=document.getElementById('cFoodName').value.trim();
+    cal=parseInt(document.getElementById('cFoodCal').value)||0;
+    prot=parseFloat(document.getElementById('cFoodProt').value)||0;
+  }
+  if(!name||!cal)return;
+  const entry = {date: TODAY, name, cal, prot};
+  foodLog.push(entry);
+  save('foodLog', foodLog);
+  syncToSheets('FoodLog', entry); 
+  renderTodayFoodLog();
+}
+
+function logSet(){
+  const machine=document.getElementById('machSel').value;
+  const wt=parseInt(document.getElementById('setWt').value);
+  const rps=parseInt(document.getElementById('setRps').value);
+  if(!wt||!rps)return;
+  const entry = {date: TODAY, machine, weight: wt, reps: rps};
+  workouts.push(entry);
+  save('workouts', workouts);
+  syncToSheets('Workouts', entry); 
+  renderLoggedSets();
+}
+
+function logWeight(){
+  const wt=parseFloat(document.getElementById('wtInput').value);
+  const note=document.getElementById('wtNote').value.trim();
+  if(!wt)return;
+  const entry = {date: TODAY, weight: wt, note};
+  weights.push(entry);
+  save('weights', weights);
+  syncToSheets('WeightLog', entry); 
+}
+
+function toggleCheck(key){
+  let tc = checks.find(c => c.date === TODAY) || {date: TODAY, smoothie: 0, chicken: 0, dinner: 0, walk: 0, water: 0};
+  tc[key] = tc[key] ? 0 : 1;
+  const idx = checks.findIndex(c => c.date === TODAY);
+  if(idx >= 0) checks[idx] = tc; else checks.push(tc);
+  save('dailyChecks', checks);
+  syncToSheets('DailyChecks', tc); 
+}
+
+// ── INITIAL RENDER PLACEHOLDERS ──────────────────────────────────────
+function renderTodayFoodLog(){ /* Logic to display today's foods */ }
+function renderLoggedSets(){ /* Logic to display today's sets */ }
+
+// Set current date in header
+document.getElementById('hdrDate').textContent = new Date().toDateString();
+</script>
+</body>
+</html>
